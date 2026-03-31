@@ -10,6 +10,10 @@ export class Canvas2DRenderer {
     this.showTrails  = true
     this.showMetrics = true
     this.trailLength = 18
+    this.autoQuality = true
+    this.trailDisableThreshold = 450
+    this.simpleBallThreshold = 700
+    this.circleDetailThreshold = 600
   }
 
   /**
@@ -20,6 +24,11 @@ export class Canvas2DRenderer {
   render (entities, time, metrics) {
     const { ctx, canvas } = this
     const W = canvas.width, H = canvas.height
+    const balls = entities.getBalls()
+    const ballCount = balls.size
+    const trailEnabled = this.showTrails && (!this.autoQuality || ballCount <= this.trailDisableThreshold)
+    const simpleBalls = this.autoQuality && ballCount > this.simpleBallThreshold
+    const coarseCircle = this.autoQuality && ballCount > this.circleDetailThreshold
 
     // Clear
     ctx.fillStyle = 'rgba(10, 10, 20, 0.92)'
@@ -29,26 +38,27 @@ export class Canvas2DRenderer {
     ctx.save()
     ctx.translate(W / 2, H / 2)
 
-    this._drawCircles(entities.getCircles())
-    if (this.showTrails) this._drawTrails(entities.getBalls())
-    this._drawBalls(entities.getBalls())
+    this._drawCircles(entities.getCircles(), coarseCircle)
+    if (trailEnabled) this._drawTrails(balls)
+    else if (this._trails.size) this._trails.clear()
+    this._drawBalls(balls, simpleBalls)
 
     ctx.restore()
 
     if (this.showMetrics && metrics) this._drawHUD(metrics, entities, time)
   }
 
-  _drawCircles (circles) {
+  _drawCircles (circles, coarse = false) {
     const { ctx } = this
     for (const circle of circles.values()) {
-      this._drawCircleBoundary(circle)
+      this._drawCircleBoundary(circle, coarse)
     }
   }
 
-  _drawCircleBoundary (circle) {
+  _drawCircleBoundary (circle, coarse = false) {
     const { ctx } = this
     const TAU = Math.PI * 2
-    const segStep = 0.008
+    const segStep = coarse ? 0.02 : 0.008
 
     ctx.lineWidth   = circle.thickness
     ctx.lineCap     = 'round'
@@ -144,10 +154,18 @@ export class Canvas2DRenderer {
     }
   }
 
-  _drawBalls (balls) {
+  _drawBalls (balls, simple = false) {
     const { ctx } = this
     for (const ball of balls.values()) {
       const [r, g, b] = this._stateColorRGB(ball.state)
+
+      if (simple) {
+        ctx.beginPath()
+        ctx.arc(ball.position.x, ball.position.y, ball.radius, 0, Math.PI * 2)
+        ctx.fillStyle = `rgb(${r},${g},${b})`
+        ctx.fill()
+        continue
+      }
 
       // Glow
       const glow = ctx.createRadialGradient(

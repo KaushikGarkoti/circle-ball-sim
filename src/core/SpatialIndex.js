@@ -46,6 +46,27 @@ export class SpatialIndex {
   }
 
   /**
+   * Nearby balls only; uses squared distance checks to avoid sqrt cost.
+   * @param {{ x: number, y: number }} position
+   * @param {number} radius
+   * @returns {object[]}
+   */
+  queryNearbyBalls (position, radius) {
+    const radiusSq = radius * radius
+    const results = new Set()
+    const cells = this._cellsInRadius(position, radius)
+    for (const key of cells) {
+      for (const e of (this._grid.get(key) ?? [])) {
+        if (e.type !== 'BALL') continue
+        const dx = e.position.x - position.x
+        const dy = e.position.y - position.y
+        if ((dx * dx + dy * dy) <= radiusSq) results.add(e)
+      }
+    }
+    return [...results]
+  }
+
+  /**
    * All balls currently inside `circle`.
    * @param {object} circle
    * @returns {object[]}

@@ -37,16 +37,30 @@ export class PhysicsEngine {
    * @param {number} tick
    * @param {number} time
    */
-  detectAndEmit (balls, circles, bus, tick, time) {
-    this._ballBall(balls, bus, tick, time)
+  detectAndEmit (balls, circles, bus, tick, time, spatial = null) {
+    this._ballBall(balls, bus, tick, time, spatial)
     this._ballCircle(balls, circles, bus, tick, time)
     this._rotateCircles(circles)
   }
 
-  _ballBall (balls, bus, tick, time) {
+  _ballBall (balls, bus, tick, time, spatial) {
+    const indexById = new Map()
+    let maxRadius = 0
     for (let i = 0; i < balls.length; i++) {
-      for (let j = i + 1; j < balls.length; j++) {
-        const a = balls[i], b = balls[j]
+      indexById.set(balls[i].id, i)
+      maxRadius = Math.max(maxRadius, balls[i].radius)
+    }
+
+    for (let i = 0; i < balls.length; i++) {
+      const a = balls[i]
+      const candidates = spatial
+        ? spatial.queryNearbyBalls(a.position, a.radius + maxRadius)
+        : balls
+
+      for (const b of candidates) {
+        if (b.id === a.id) continue
+        const j = indexById.get(b.id)
+        if (j <= i) continue
         const dx = b.position.x - a.position.x
         const dy = b.position.y - a.position.y
         const d  = Math.sqrt(dx * dx + dy * dy)

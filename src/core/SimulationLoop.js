@@ -115,7 +115,7 @@ export class SimulationLoop {
     this.spatial.rebuild(balls, circles)
 
     // 3 — Detect collisions → enqueue events (depth 0)
-    this.physics.detectAndEmit(balls, circles, this.bus, this.tick, this.time)
+    this.physics.detectAndEmit(balls, circles, this.bus, this.tick, this.time, this.spatial)
 
     // 4 — System monitors → enqueue aggregate events
     this.monitors.computeAndEmit(this.entities, this.bus, this.tick, this.time)
