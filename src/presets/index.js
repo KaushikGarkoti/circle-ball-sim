@@ -98,4 +98,38 @@ export const gravityPreset = {
   monitors: [overloadMonitor(45), energyMonitor(5000, 80)]
 }
 
-export const allPresets = [escapistPreset, chaosPreset, gravityPreset]
+// ─── Preset: Explosive Chaos ─────────────────────────────────────────────────
+// Aggressive growth + split reactions. Designed for fast escalation.
+
+export const explosiveChaosPreset = {
+  name: 'Explosive Chaos',
+  description: 'High-growth chain reactions with stronger split and escape spawning.',
+  seed: 99,
+  physics: { gravity: 0, drag: 0.0005, timeStep: 1 / 60, timeScale: 1.15 },
+  entities: {
+    circles: [{
+      center: { x: 0, y: 0 },
+      radius: 280,
+      rotationSpeed: 0.005,
+      gaps: [{ startAngle: -0.18, endAngle: 0.18 }],
+      thickness: 5
+    }],
+    balls: [
+      { position: { x: -80, y: -20 }, velocity: { x: 7.2, y: 3.8 }, radius: 20, mass: 1.6, restitution: 0.96 },
+      { position: { x: 85, y: 15 }, velocity: { x: -6.8, y: -4.2 }, radius: 19, mass: 1.5, restitution: 0.96 },
+      { position: { x: 0, y: -95 }, velocity: { x: 2.5, y: 7.4 }, radius: 18, mass: 1.3, restitution: 0.96 }
+    ]
+  },
+  rules: [
+    spawnOnEscape(3, 0.78, 140),
+    splitOnCollision(170, 5),
+    chargeOnCollision(120),
+    chargedEmitsEnergy(170),
+    decayToNormal(150),
+    growGapOnEscape(0.06, 1.8),
+    shrinkOnOverload(6, 90)
+  ],
+  monitors: [overloadMonitor(120), energyMonitor(14000, 120), phaseTransitionMonitor()]
+}
+
+export const allPresets = [escapistPreset, chaosPreset, gravityPreset, explosiveChaosPreset]

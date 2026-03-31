@@ -75,37 +75,60 @@ export class MonitorRegistry {
 
 // ─── Built-in monitors (register these in your preset) ─────────────────────
 
-export const overloadMonitor = (maxBalls = 80) => ({
-  id: 'overload',
-  check (m, prev) {
-    if (m.ballCount > maxBalls && prev.ballCount <= maxBalls) {
-      return [{ id: uuid(), type: 'SYSTEM_OVERLOAD', context: { entities: [], ballCount: m.ballCount } }]
+export const overloadMonitor = (maxBalls = 80) => {
+  const monitor = {
+    id: 'overload',
+    cfg: { maxBalls },
+    guiSchema: [
+      { key: 'maxBalls', label: 'Ball Limit', min: 10, max: 300, step: 5 }
+    ],
+    check (m, prev) {
+      if (m.ballCount > monitor.cfg.maxBalls && prev.ballCount <= monitor.cfg.maxBalls) {
+        return [{ id: uuid(), type: 'SYSTEM_OVERLOAD', context: { entities: [], ballCount: m.ballCount } }]
+      }
+      return []
     }
-    return []
   }
-})
+  return monitor
+}
 
-export const energyMonitor = (highThreshold = 8000, lowThreshold = 200) => ({
-  id: 'energy',
-  check (m, prev) {
-    const events = []
-    if (m.totalKineticEnergy > highThreshold && prev.totalKineticEnergy <= highThreshold)
-      events.push({ id: uuid(), type: 'HIGH_ENERGY_STATE', context: { entities: [], energy: m.totalKineticEnergy } })
-    if (m.totalKineticEnergy < lowThreshold && prev.totalKineticEnergy >= lowThreshold)
-      events.push({ id: uuid(), type: 'LOW_ENERGY_STATE', context: { entities: [], energy: m.totalKineticEnergy } })
-    return events
-  }
-})
-
-export const phaseTransitionMonitor = () => ({
-  id: 'phase-transition',
-  check (m, prev) {
-    if (m.dominantState !== prev.dominantState) {
-      return [{
-        id: uuid(), type: 'PHASE_TRANSITION',
-        context: { entities: [], fromState: prev.dominantState, toState: m.dominantState }
-      }]
+export const energyMonitor = (highThreshold = 8000, lowThreshold = 200) => {
+  const monitor = {
+    id: 'energy',
+    cfg: { highThreshold, lowThreshold },
+    guiSchema: [
+      { key: 'highThreshold', label: 'High Energy', min: 500, max: 20000, step: 500 },
+      { key: 'lowThreshold', label: 'Low Energy', min: 0, max: 1000, step: 10 }
+    ],
+    check (m, prev) {
+      const events = []
+      if (m.totalKineticEnergy > monitor.cfg.highThreshold && prev.totalKineticEnergy <= monitor.cfg.highThreshold) {
+        events.push({ id: uuid(), type: 'HIGH_ENERGY_STATE', context: { entities: [], energy: m.totalKineticEnergy } })
+      }
+      if (m.totalKineticEnergy < monitor.cfg.lowThreshold && prev.totalKineticEnergy >= monitor.cfg.lowThreshold) {
+        events.push({ id: uuid(), type: 'LOW_ENERGY_STATE', context: { entities: [], energy: m.totalKineticEnergy } })
+      }
+      return events
     }
-    return []
   }
-})
+  return monitor
+}
+
+export const phaseTransitionMonitor = () => {
+  const monitor = {
+    id: 'phase-transition',
+    cfg: {},
+    guiSchema: [],
+    check (m, prev) {
+      if (m.dominantState !== prev.dominantState) {
+        return [{
+          id: uuid(),
+          type: 'PHASE_TRANSITION',
+          context: { entities: [], fromState: prev.dominantState, toState: m.dominantState }
+        }]
+      }
+      return []
+    }
+  }
+  return monitor
+}
